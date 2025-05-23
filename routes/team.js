@@ -4,13 +4,12 @@ const bcrypt = require('bcrypt')
 
 
 //REGISTER
-router.post("/create",async(req,res)=>{
-    try{
-    //for hashing password 
-    const first = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password,first)
+router.post("/create", async (req, res) => {
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-    const newTeam = new Team({
+        const newTeam = new Team({
         name:req.body.name,
         captain_id:req.body.captain_id,
         captain_name:req.body.captain_name,
@@ -28,12 +27,13 @@ router.post("/create",async(req,res)=>{
         password:hashedPassword
     })
  
-        const team = newTeam.save();
-        res.status(200).json(team)
-    }catch(err){
-     res.status(500).json(err)     
-    } 
-})
+       const team = await newTeam.save(); // ✅ await here
+        res.status(200).json(team);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
 
 
 router.put("/:id",async(req,res)=>{
@@ -54,7 +54,7 @@ router.post('/join',async(req,res)=>{
     !team && res.status(404).json("Error");
 
     const correctPassword = await bcrypt.compare(req.body.password,team.password);
-    !correctPassword && res.status(404).json("Error");
+    !correctPassword && res.status(403).json("Error");
 
      res.status(200).json("Yes") 
     }catch(err){
